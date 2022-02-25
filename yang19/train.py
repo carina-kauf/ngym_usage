@@ -22,7 +22,7 @@ def main(args, model, device, env, dataset, act_size):
     running_task_time = 0
     running_train_time = 0
 
-    for i in range(100):#40000):
+    for i in range(40000):
         task_time_start = time.time()
         inputs, labels = dataset()
         running_task_time += time.time() - task_time_start
