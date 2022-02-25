@@ -91,18 +91,6 @@ class RNNNet(nn.Module):
         out = self.fc(rnn_activity)
         return out, rnn_activity
 
-#
-# class Net(nn.Module):
-#     def __init__(self, input_size, hidden_size, output_size):
-#         super(Net, self).__init__()
-#         self.lstm = nn.LSTM(input_size, hidden_size)
-#         self.linear = nn.Linear(hidden_size, output_size)
-#
-#     def forward(self, x):
-#         out, hidden = self.lstm(x)
-#         x = self.linear(out)
-#         return x
-
 
 # TODO: Make this into a function in neurogym
 def get_performance(net, env, num_trial=1000, device='cpu'):
