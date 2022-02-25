@@ -43,20 +43,27 @@ def task_sim_histogram(mode=None):
     df = pd.read_csv("files/nr_clusters.txt", sep="\t", index_col=False)
     seeds = np.array(df['seed'])
 
-    # Step 1: read task stimilarity into dict to avoid reloading:
+    # Step 1: read task similarity into dict to avoid reloading:
     SEED2TASKSIM = {}
-    SEED2TASKSIM_upper = {}
     for seed in seeds:
         fname = f'files/seed={seed}_normalizedTV.pkl'
         with open(fname, 'rb') as f:
             norm_task_variance = pickle.load(f)
-            tasksim = pairwise_distance(norm_task_variance, metric='correlation')
-            #When metric='cosine', this is equivalent to below
+
+            if mode == "RSA_corr":
+                tasksim = pairwise_distance(norm_task_variance, metric='correlation')
+            elif mode == "RSA_cosine":
+                tasksim = pairwise_distance(norm_task_variance, metric='cosine')
+            elif mode == "cluster_cosine":
+                tasksim = cosine_similarity(norm_task_variance)
+            else:
+                raise NotImplementedError
+            #When metric='cosine', pairwise_distance(norm_task_variance, metric='cosine') is equivalent to below
             #tasksim = cosine_similarity(norm_task_variance)
             # return upper triangular matrix values, excluding diagonal. outputs vector created by concatenating numbers row-wise
-            upper = tasksim[np.triu_indices(np.shape(tasksim)[0], k=1)]
+            # upper = tasksim[np.triu_indices(np.shape(tasksim)[0], k=1)]
+            # upper = np.ones_like(upper) - upper
         SEED2TASKSIM[seed] = tasksim
-        SEED2TASKSIM_upper[seed] = upper
 
     sim_scores = []
     if 'RSA' in mode:
@@ -65,9 +72,9 @@ def task_sim_histogram(mode=None):
             for seed2 in seeds:
                 if seed1 != seed2:
                     if mode == 'RSA_corr':
-                        score = pearsonr(SEED2TASKSIM_upper[seed1], SEED2TASKSIM_upper[seed2])[0]
+                        score = pearsonr(SEED2TASKSIM[seed1], SEED2TASKSIM[seed2])[0]
                     elif mode == 'RSA_cosine':
-                        score = 1 - distance.cosine(SEED2TASKSIM_upper[seed1], SEED2TASKSIM_upper[seed2])
+                        score = 1 - distance.cosine(SEED2TASKSIM[seed1], SEED2TASKSIM[seed2])
                     else:
                         raise NotImplementedError
                     sim_scores.append(score)
@@ -81,7 +88,7 @@ def task_sim_histogram(mode=None):
             title = f'Distribution of pairwise correlation \n for task-similarity for {len(seeds)} runs'
         savename = f'replication_results/task_similarity_distribution_{mode}.png'
 
-    elif mode == 'cluster':
+    elif 'cluster' in mode:
         #Step 2: Compute clusterings on similarity matrix
         CLUSTERINGS = {}
         for seed in seeds:
@@ -127,9 +134,9 @@ def main():
     os.makedirs(path, exist_ok=True)
 
     nr_of_cluster_distribution()
-    task_sim_histogram(mode='RSA_corr')
-    task_sim_histogram(mode='RSA_cosine')
-    task_sim_histogram(mode='cluster')
+    modes = ['RSA_corr', 'RSA_cosine', 'cluster_cosine']
+    for mode in modes:
+        task_sim_histogram(mode=mode)
 
 if __name__ == '__main__':
     main()

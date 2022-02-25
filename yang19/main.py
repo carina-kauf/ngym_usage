@@ -22,7 +22,7 @@ def main():
 
     parser.add_argument('--training', type=int, default=40000,
                         help='number of training iterations')
-    parser.add_argument('--batch_size', type=int, default=64,
+    parser.add_argument('--batch_size', type=int, default=20,
                         help='training batch size')
     parser.add_argument('--seq_len', type=int, default=100,
                         help='sequence length')
