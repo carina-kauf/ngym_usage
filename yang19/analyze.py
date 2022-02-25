@@ -19,7 +19,7 @@ def print_performance(model, env, tasks, device):
     # Get performance
     for i in range(20):
         env.set_i(i)
-        perf = get_performance(model, env, num_trial=200, device)
+        perf = get_performance(model, env, device, num_trial=200)
         print('Average performance {:0.2f} for task {:s}'.format(perf, tasks[i]))
 
 

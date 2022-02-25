@@ -93,7 +93,7 @@ class RNNNet(nn.Module):
 
 
 # TODO: Make this into a function in neurogym
-def get_performance(net, env, num_trial=1000, device='cpu'):
+def get_performance(net, env, device='cpu', num_trial=1000):
     perf = 0
     for i in range(num_trial):
         env.new_trial()

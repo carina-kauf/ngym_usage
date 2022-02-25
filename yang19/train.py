@@ -52,7 +52,7 @@ def main(args, model, device, env, dataset, act_size):
                         running_train_time / print_step * 1e3))
                 running_task_time, running_train_time = 0, 0
 
-            perf = get_performance(model, env, num_trial=200, device=device)
+            perf = get_performance(model, env, device=device, num_trial=200)
             print('{:d} perf: {:0.2f}'.format(i + 1, perf))
 
             fname = os.path.join('files',f'seed={args.seed}_model.pt')
