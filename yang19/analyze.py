@@ -35,7 +35,7 @@ def get_activity(model, env, device, num_trial=1000):
         inputs = torch.from_numpy(ob).type(torch.float).to(device)
 
         action_pred, activity = model(inputs)
-        activity = activity.detach().numpy()  # (seq_len, 1, hidden_size)
+        activity = activity.detach().cpu().numpy()  # (seq_len, 1, hidden_size)
         trial_list.append(env.trial)
         activity_list.append(activity)  # list of size 500
 
