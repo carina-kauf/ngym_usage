@@ -17,10 +17,11 @@ def set_seed(seed, cuda):
             raise ValueError("WARNING: You have a CUDA device, so you should probably run with --cuda")
     print(f"Set seed to {seed}")
 
-def make_train_environment(args):
+def make_train_environment(args, seed):
     # Environment
     kwargs = {'dt': args.dt}
     # kwargs = {'dt': 100, 'sigma': 0, 'dim_ring': 2, 'cohs': [0.1, 0.3, 0.6, 1.0]}
+    set_seed(seed, args.cuda)
 
     # Make supervised dataset
     tasks = ngym.get_collection('yang19')
@@ -34,7 +35,8 @@ def make_train_environment(args):
     act_size = env.action_space.n
     return env, dataset, ob_size, act_size
 
-def make_analyze_environment(args):
+def make_analyze_environment(args, seed):
+    set_seed(seed, args.cuda)
     # Environment
     timing = {'fixation': ('constant', 500)}
     kwargs = {'dt': args.dt, 'timing': timing}

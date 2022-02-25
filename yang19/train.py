@@ -12,8 +12,8 @@ import torch.nn as nn
 from models import get_performance
 from make_environments import set_seed
 
-def main(args, model, device, env, dataset, act_size):
-    set_seed(args.seed, args.cuda)
+def main(args, seed, model, device, env, dataset, act_size):
+    set_seed(seed, args.cuda)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
@@ -22,7 +22,7 @@ def main(args, model, device, env, dataset, act_size):
     running_task_time = 0
     running_train_time = 0
 
-    for i in range(40000):
+    for i in range(args.training):
         task_time_start = time.time()
         inputs, labels = dataset()
         running_task_time += time.time() - task_time_start
@@ -44,21 +44,21 @@ def main(args, model, device, env, dataset, act_size):
         # print statistics
         running_loss += loss.item()
         if i % print_step == (print_step - 1):
-            print('{:d} loss: {:0.5f}'.format(i + 1, running_loss / print_step))
+            print('{:d} loss: {:0.5f}'.format(i + 1, running_loss / print_step), flush=True)
             running_loss = 0.0
             if True:
                 print('Task/Train time {:0.1f}/{:0.1f} ms/step'.format(
                         running_task_time / print_step * 1e3,
-                        running_train_time / print_step * 1e3))
+                        running_train_time / print_step * 1e3), flush=True)
                 running_task_time, running_train_time = 0, 0
 
             perf = get_performance(model, env, device=device, num_trial=200)
-            print('{:d} perf: {:0.2f}'.format(i + 1, perf))
+            print('{:d} perf: {:0.2f}'.format(i + 1, perf), flush=True)
 
             fname = os.path.join('files',f'seed={args.seed}_model.pt')
             torch.save(model.state_dict(), fname)
 
-    print('Finished Training')
+    print('Finished Training', flush=True)
 
 if __name__ == '__main__':
-    main(args)
+    main(args, seed)

@@ -43,7 +43,7 @@ def get_activity(model, env, device, num_trial=1000):
     return activity, trial_list
 
 
-def get_normalized_tv(args, env, tasks, model, device):
+def get_normalized_tv(seed, env, tasks, model, device):
     task_variance_list = list()
     for i in range(20):
         env.set_i(i)
@@ -63,7 +63,7 @@ def get_normalized_tv(args, env, tasks, model, device):
     # Normalize by the total variance across tasks
     norm_task_variance = task_variance / np.max(task_variance, axis=0)
 
-    fname = f'files/seed={args.seed}_normalizedTV.pkl'
+    fname = f'files/seed={seed}_normalizedTV.pkl'
     with open(fname, 'wb') as fout:
         pickle.dump(norm_task_variance, fout)
     return norm_task_variance
@@ -77,7 +77,7 @@ def figure_settings():
     labelpad = 13
     return figsize, rect, rect_color, rect_cb, fs, labelpad
 
-def get_cluster_plot(args, tasks, norm_task_variance):
+def get_cluster_plot(seed, tasks, norm_task_variance):
     X = norm_task_variance.T
     silhouette_scores = list()
     n_clusters = np.arange(2, 20)
@@ -90,7 +90,7 @@ def get_cluster_plot(args, tasks, norm_task_variance):
     plt.xticks(range(2, 20))
     plt.xlabel('Number of clusters')
     plt.ylabel('Silhouette score')
-    plt.savefig(os.path.join('figures', f'seed={args.seed}_silhouette_score.png'), bbox_inches='tight', dpi=280)
+    plt.savefig(os.path.join('figures', f'seed={seed}_silhouette_score.png'), bbox_inches='tight', dpi=280)
     plt.show()
 
     n_cluster = n_clusters[np.argmax(silhouette_scores)]
@@ -98,11 +98,11 @@ def get_cluster_plot(args, tasks, norm_task_variance):
     filename = 'files/nr_clusters.txt'
     if exists(filename):
         with open(filename, 'a') as file:
-            file.write(f'{args.seed}\t{n_cluster}\n')
+            file.write(f'{seed}\t{n_cluster}\n')
     else:
         with open(filename, 'w') as file:
             file.write('seed\tnr_clusters\n')
-            file.write(f'{args.seed}\t{n_cluster}\n')
+            file.write(f'{seed}\t{n_cluster}\n')
 
 
     cluster_model = AgglomerativeClustering(n_clusters=n_cluster)
@@ -165,15 +165,15 @@ def get_cluster_plot(args, tasks, norm_task_variance):
     ax.set_ylim([-1, 1])
     ax.axis('off')
 
-    plt.savefig(os.path.join('figures',f'seed={args.seed}_clusterplot.png'),bbox_inches='tight',dpi=280)
+    plt.savefig(os.path.join('figures',f'seed={seed}_clusterplot.png'),bbox_inches='tight',dpi=280)
     fig.show()
 
-def plot_task_similarity(args, norm_task_variance, tasks):
+def plot_task_similarity(seed, norm_task_variance, tasks):
     similarity = cosine_similarity(norm_task_variance)  # TODO: check
 
-    fname = f'files/seed={args.seed}_task_similarity.pkl'
-    with open(fname, 'wb') as fout:
-        pickle.dump(similarity, fout)
+    # fname = f'files/seed={args.seed}_task_similarity.pkl'
+    # with open(fname, 'wb') as fout:
+    #     pickle.dump(similarity, fout)
 
     print(np.shape(norm_task_variance), np.shape(similarity))
 
@@ -195,10 +195,10 @@ def plot_task_similarity(args, norm_task_variance, tasks):
     cb.set_label('Similarity', fontsize=7, labelpad=0)
     plt.tick_params(axis='both', which='major', labelsize=7)
 
-    plt.savefig(f'figures/seed={args.seed}_task_similarity.png')
+    plt.savefig(f'figures/seed={seed}_task_similarity.png')
     plt.show()
 
-def plot_feature_similarity(args, norm_task_variance):
+def plot_feature_similarity(seed, norm_task_variance):
     X = norm_task_variance.T
     similarity = cosine_similarity(X)  # TODO: check
     print(np.shape(X), np.shape(similarity))
@@ -212,21 +212,22 @@ def plot_feature_similarity(args, norm_task_variance):
     cb.outline.set_linewidth(0.5)
     cb.set_label('Similarity', fontsize=7, labelpad=0)
     plt.tick_params(axis='both', which='major', labelsize=7)
-    plt.savefig(f'figures/seed={args.seed}_feature_similarity.png')
+    plt.savefig(f'figures/seed={seed}_feature_similarity.png')
     plt.show()
 
-def main(args, model, env, tasks, device):
-    set_seed(args.seed, args.cuda)
-    print('Performance')
+def main(args, seed, model, env, tasks, device):
+    set_seed(seed, args.cuda)
+    seed = seed
+    print('Performance', flush=True)
     print_performance(model, env, tasks, device)
-    print("Computing task variance")
-    norm_task_variance = get_normalized_tv(args, env, tasks, model, device)
-    print("Plotting task variance")
-    get_cluster_plot(args, tasks, norm_task_variance)
-    plot_task_similarity(args, norm_task_variance, tasks)
-    plot_feature_similarity(args, norm_task_variance)
+    print("Computing task variance", flush=True)
+    norm_task_variance = get_normalized_tv(seed, env, tasks, model, device)
+    print("Plotting task variance", flush=True)
+    get_cluster_plot(seed, tasks, norm_task_variance)
+    plot_task_similarity(seed, norm_task_variance, tasks)
+    plot_feature_similarity(seed, norm_task_variance)
 
 if __name__ == '__main__':
-    main(args, model, env, tasks, device)
+    main(args, seed, model, env, tasks, device)
 
 
