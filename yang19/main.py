@@ -57,8 +57,6 @@ def main():
     _logger.info('********* ANALYZING **********')
     env = make_analyze_environment(args)
     tasks = ngym.get_collection('yang19')
-    #performance
-    print_performance(model, env, tasks)
     #task variance
     analyze(args, model, env, tasks, device)
 

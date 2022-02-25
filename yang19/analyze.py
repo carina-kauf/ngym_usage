@@ -15,11 +15,11 @@ from make_environments import set_seed
 
 from os.path import exists
 
-def print_performance(model, env, tasks):
+def print_performance(model, env, tasks, device):
     # Get performance
     for i in range(20):
         env.set_i(i)
-        perf = get_performance(model, env, num_trial=200)
+        perf = get_performance(model, env, num_trial=200, device)
         print('Average performance {:0.2f} for task {:s}'.format(perf, tasks[i]))
 
 
@@ -217,6 +217,8 @@ def plot_feature_similarity(args, norm_task_variance):
 
 def main(args, model, env, tasks, device):
     set_seed(args.seed, args.cuda)
+    print('Performance')
+    print_performance(model, env, tasks, device)
     print("Computing task variance")
     norm_task_variance = get_normalized_tv(args, env, tasks, model, device)
     print("Plotting task variance")
