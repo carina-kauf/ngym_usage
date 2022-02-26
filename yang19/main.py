@@ -61,7 +61,7 @@ def main():
         _logger.info('********* TRAINING **********')
         env, dataset, ob_size, act_size = make_train_environment(args, seed)
         model = RNNNet(input_size=ob_size, hidden_size=args.hidden_size, output_size=act_size,
-                       dt=env.dt).to(device)
+                       sigma_rec=args.sigma_rec, dt=env.dt).to(device)
         print(model)
         train(args, seed, model, device, env, dataset, act_size)
 

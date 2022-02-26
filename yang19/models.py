@@ -15,7 +15,7 @@ class CTRNN(nn.Module):
         hidden: (batch, hidden_size), initial hidden activity
     """
 
-    def __init__(self, input_size, hidden_size, sigma_rec=0.05, dt=None, **kwargs):
+    def __init__(self, input_size, hidden_size, sigma_rec=None, dt=None):
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -79,11 +79,11 @@ class RNNNet(nn.Module):
         rnn: str, type of RNN, lstm, rnn, ctrnn, or eirnn
     """
 
-    def __init__(self, input_size, hidden_size, output_size, **kwargs):
+    def __init__(self, input_size, hidden_size, output_size, sigma_rec=0.05, **kwargs):
         super().__init__()
 
         # Continuous time RNN
-        self.rnn = CTRNN(input_size, hidden_size, **kwargs)
+        self.rnn = CTRNN(input_size, hidden_size, sigma_rec=sigma_rec, **kwargs)
         self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
