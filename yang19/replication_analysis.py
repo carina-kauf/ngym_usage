@@ -21,7 +21,7 @@ def nr_of_cluster_distribution():
 
     nr_clusters = np.array(df['nr_clusters'])
     mx_clusters = np.max(nr_clusters)
-    print(seeds)
+    print(len(seeds))
     cnt_dict = {}
     for i in range(1, mx_clusters+1):
         if i not in cnt_dict:
@@ -30,12 +30,17 @@ def nr_of_cluster_distribution():
             cnt_dict[i] += 1
 
     print(cnt_dict)
-    sns.histplot(data=df, x="nr_clusters")
-    plt.xticks(range(0, max(nr_clusters)+1))
+    sns.histplot(data=df, x="nr_clusters", bins=np.arange(2,len(cnt_dict)+2)-0.5, edgecolor='white',
+                 color=sns.color_palette()[0])
+    plt.axvline(x=12, color='green', linestyle='dashed', label='Yang et al. 2019')
+    plt.axvline(x=np.mean(nr_clusters), color='black', linestyle='dashed', label=f'Average={round(np.mean(nr_clusters),1)}')
+    plt.xticks(range(2, max(nr_clusters)+1))
     plt.yticks(range(0, max(cnt_dict.values())+1))
     plt.xlabel('Nr. of clusters')
-    plt.title(f'Distribution of clusters over {len(seeds)} training runs')
-    plt.savefig(f'replication_results/cluster_distribution.png')
+    plt.legend()
+    plt.title(f'Distribution of number of unit clusters over {len(seeds)} runs \n '
+              f'(training iterations = 40000 | bsz = 20)')
+    plt.savefig(f'replication_results/cluster_distribution.png',bbox_inches='tight',dpi=200)
     plt.show()
 
 def task_sim_histogram(mode=None):
@@ -56,6 +61,9 @@ def task_sim_histogram(mode=None):
                 tasksim = pairwise_distance(norm_task_variance, metric='cosine')
             elif mode == "cluster_cosine":
                 tasksim = cosine_similarity(norm_task_variance)
+            elif mode == 'cluster_corr':
+                tasksim = pd.DataFrame(norm_task_variance.T)
+                tasksim = tasksim.corr('pearson').values
             else:
                 raise NotImplementedError
             #When metric='cosine', pairwise_distance(norm_task_variance, metric='cosine') is equivalent to below
@@ -82,13 +90,16 @@ def task_sim_histogram(mode=None):
         # figure settings
         if mode == 'RSA_cosine':
             xlabel = 'Cosine similarity'
-            title = f'Distribution of pairwise cosine similarity \n for task-similarity for {len(seeds)} runs'
+            title = f'Distribution of pairwise cosine similarity scores \n task-similarity ({len(seeds)} runs |' \
+                    f' {sum([len(seeds) - i for i in range(1,len(seeds))])} comparisons)'
         if mode == 'RSA_corr':
             xlabel = 'Pearson r'
-            title = f'Distribution of pairwise correlation \n for task-similarity for {len(seeds)} runs'
+            title = f'Distribution of pairwise Pearson correlation scores \n task-similarity ({len(seeds)} runs |' \
+                    f' {sum([len(seeds) - i for i in range(1,len(seeds))])} comparisons)'
         savename = f'replication_results/task_similarity_distribution_{mode}.png'
 
     elif 'cluster' in mode:
+        task_sim_clusters = []
         #Step 2: Compute clusterings on similarity matrix
         CLUSTERINGS = {}
         for seed in seeds:
@@ -99,6 +110,7 @@ def task_sim_histogram(mode=None):
                 labels = cluster_model.fit_predict(SEED2TASKSIM[seed])
                 silhouette_scores.append(silhouette_score(SEED2TASKSIM[seed], labels))
             n_cluster = n_clusters[np.argmax(silhouette_scores)]
+            task_sim_clusters.append(n_cluster)
 
             cluster_model = AgglomerativeClustering(n_clusters=n_cluster)
             labels = cluster_model.fit_predict(SEED2TASKSIM[seed])
@@ -113,19 +125,53 @@ def task_sim_histogram(mode=None):
 
         #figure settings
         xlabel = 'Adjusted Mutual Information (AMI)'
-        title = f'Distribution of pairwise AMI scores \n for task-similarity clusterings for {len(seeds)} runs'
+        if 'cosine' in mode:
+            toadd = 'cosine sim'
+        else:
+            toadd  = 'Pearson r'
+        title = f'Distribution of pairwise AMI scores for task-similarity clusterings \n' \
+                    f'{toadd} | {len(seeds)} runs | {sum([len(seeds) - i for i in range(1,len(seeds))])} comparisons'
         savename = f'replication_results/task_similarity_distribution_{mode}.png'
 
     else:
         raise NotImplementedError
 
+    if "RSA" in mode:
+        color=sns.color_palette()[2]
+    else:
+        color=sns.color_palette()[1]
     df = pd.DataFrame(sim_scores, columns=['sim_scores'])
-    sns.histplot(data=df, x="sim_scores")
-
+    sns.histplot(data=df, x="sim_scores", edgecolor='white', bins=50, color=color)
+    plt.axvline(x=np.mean(sim_scores), color='black', linestyle='dashed', label=f'Average={round(np.mean(sim_scores),3)}')
+    plt.legend()
     plt.xlabel(xlabel)
     plt.title(title)
-    plt.savefig(savename,bbox_inches='tight',dpi=280)
+    plt.savefig(savename,bbox_inches='tight',dpi=200)
     plt.show()
+
+    if 'cluster' in mode:
+        df = pd.DataFrame(task_sim_clusters, columns=['task_sim_clusters'])
+        mx_clusters = np.max(task_sim_clusters)
+        cnt_dict = {}
+        for i in range(1, mx_clusters + 1):
+            if i not in cnt_dict:
+                cnt_dict[i] = sum([1 for x in task_sim_clusters if x == i])
+            else:
+                cnt_dict[i] += 1
+
+        print(cnt_dict)
+        sns.histplot(data=df, x="task_sim_clusters", bins=np.arange(2, len(cnt_dict) + 2) - 0.5, edgecolor='white',
+                     color=sns.color_palette()[1])
+        plt.axvline(x=np.mean(task_sim_clusters), color='black', linestyle='dashed',
+                    label=f'Average={round(np.mean(task_sim_clusters), 1)}')
+        plt.xticks(range(2, max(task_sim_clusters) + 1))
+        plt.yticks(range(0, max(cnt_dict.values()) + 1))
+        plt.xlabel('Nr. of clusters')
+        plt.legend()
+        plt.title(f'Distribution of number of task_similarity clusters over {len(seeds)} runs \n '
+                  f'({toadd} | training iterations = 40000 | bsz = 20)')
+        plt.savefig(f'replication_results/cluster_distribution_task_similarity_{mode}.png',bbox_inches='tight',dpi=200)
+        plt.show()
 
 
 def main():
@@ -134,7 +180,7 @@ def main():
     os.makedirs(path, exist_ok=True)
 
     nr_of_cluster_distribution()
-    modes = ['RSA_corr', 'RSA_cosine', 'cluster_cosine']
+    modes = ['RSA_corr', 'RSA_cosine', 'cluster_cosine', 'cluster_corr']
     for mode in modes:
         task_sim_histogram(mode=mode)
 
